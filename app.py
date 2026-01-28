@@ -12,9 +12,16 @@ def index():
     if "user_id" not in session:
         return redirect("/login")
 
-    user = db.execute("SELECT lietotajvards, vards, uzvards FROM lietotaji WHERE id=?;", session["user_id"])
-    user = user[0] if user else None
-    return render_template("index.html", user=user)
+    user = db.execute(
+        "SELECT lietotajvards, vards, uzvards FROM lietotaji WHERE id=?;",
+        session["user_id"]
+    )
+
+    if not user:
+        session.clear()
+        return redirect("/login")
+
+    return render_template("index.html", user=user[0])
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -30,7 +37,8 @@ def login():
 
     lietotajs = db.execute(
         "SELECT * FROM lietotaji WHERE lietotajvards=? AND parole=?;",
-        lietotajvards, parole
+        lietotajvards,
+        parole
     )
 
     if lietotajs:
@@ -57,13 +65,20 @@ def register():
     if parole != apst_parole:
         return redirect("/register")
 
-    lietotajs = db.execute("SELECT * FROM lietotaji WHERE lietotajvards=?;", lietotajvards)
+    lietotajs = db.execute(
+        "SELECT id FROM lietotaji WHERE lietotajvards=?;",
+        lietotajvards
+    )
+
     if lietotajs:
         return redirect("/register")
 
     result = db.execute(
         "INSERT INTO lietotaji(lietotajvards, parole, vards, uzvards) VALUES(?, ?, ?, ?);",
-        lietotajvards, parole, vards, uzvards
+        lietotajvards,
+        parole,
+        vards,
+        uzvards
     )
 
     if result:
